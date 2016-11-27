@@ -1,0 +1,297 @@
+<?php
+
+
+
+function form_sainet_permission() {
+  return array(
+    'administer your module' => array(
+      'title' => t('Administer permission for your module'),
+      'description' => t('Some description that would appear on the permission page..'),
+    ),
+  );
+}
+
+/* implement hook menu form ajax url and page */
+
+function form_sainet_menu() {
+  $items = array();
+
+  $items['registro/form-sainet'] = array( //this creates a URL that will call this form at "examples/form-example"
+    'title' => 'Form Sainet', //page title
+    'description' => 'Form Testing',
+    'page callback' => 'drupal_get_form', //this is the function that will be called when the page is accessed.  for a form, use drupal_get_form
+    'page arguments' => array('form_sainet_form'), //put the name of the form here
+    'access callback' => TRUE
+  );
+
+
+
+  $items['registros'] = array( //this creates a URL that will call this form at "examples/form-example"
+    'title' => 'Registros Sainet', //page title
+    'description' => 'Form Testing',
+    'page callback' => 'all_registros',
+    'access arguments' => array('administer your module'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+
+  return $items;
+}
+
+
+
+
+/* implement hook form */
+function form_sainet_form($form, &$form_state) {
+
+	$form['group1'] = array(
+	'#type' => 'fieldset',
+	'#title' => t('Paso 1'),
+	'#collapsible' => FALSE,
+	'#collapsed' => FALSE,  
+	);
+  
+	$form['group1']['nombres'] = array(
+	'#type' => 'textfield',
+	'#title' => t('Nombres'),
+	'#maxlength' => 127,
+	'#required' => TRUE,
+	);
+
+	$form['group1']['apellidos'] = array(
+	'#type' => 'textfield',
+	'#title' => t('Apellidos'),
+	'#maxlength' => 127,
+	'#required' => TRUE,
+	);
+
+	$form['group1']['genero'] = array(
+	'#type' => 'select',
+	'#title' => t('Género'),
+	'#options' => array(
+	1 => 'Mujer',
+	2 => 'Hombre',
+	),
+	'#description' => t('Una única opción'),
+	'#required' => TRUE,
+	);
+
+	$form['group1']['date'] = array(
+	'#type' => 'date',
+	'#title' => t('Fecha de Nacimiento'),
+	'#maxlength' => 127,
+	'#required' => TRUE,
+	'#date_format' => 'm/d/Y h:i a',
+	);
+
+
+	$form['group1']['submit_button'] = array(
+	'#type' => 'button',
+	'#value' => t('Siguiente'),
+	);
+
+	$form['group2'] = array(
+	'#type' => 'fieldset',
+	'#title' => t('Paso 2'),
+	'#collapsible' => FALSE,
+	'#collapsed' => FALSE,  
+	);
+
+	$form['group2']['ciudad'] = array(
+	'#type' => 'textfield',
+	'#title' => t('Ciudad'),
+	'#maxlength' => 127,
+	'#required' => TRUE,
+	);
+
+	$form['group2']['telefono'] = array(
+	'#type' => 'textfield',
+	'#title' => t('Teléfono'),
+	'#maxlength' => 127,
+	'#required' => TRUE,
+	);
+
+	$form['group2']['direccion'] = array(
+	'#type' => 'textfield',
+	'#title' => t('Dirección'),
+	'#maxlength' => 127,
+	'#required' => TRUE,
+	);
+
+	$form['group2']['submit_button'] = array(
+	'#type' => 'submit',
+	'#value' => t('Enviar'),
+	);
+
+	$form['group2']['back'] = array(
+	'#type' => 'button',
+	'#value' => t('Atrás'),
+	);
+  
+
+  return $form;
+}
+
+function form_sainet_form_submit($form, &$form_state) {
+	
+	// echo "<pre>";
+	// print_r($node);
+	// echo "</pre>";
+	// exit("aca");
+	$nombres 	= $form_state["values"]["nombres"];
+	$apellidos 	= $form_state["values"]["apellidos"];
+	$genero 	= $form_state["values"]["genero"];
+	$date 		= $form_state["values"]["date"]["day"]."-".$form_state["values"]["date"]["month"]."-".$form_state["values"]["date"]["year"];
+	$ciudad 	= $form_state["values"]["ciudad"];
+	$telefeono 	= $form_state["values"]["telefono"];
+	$direccion 	= $form_state["values"]["direccion"];
+
+
+	$node = new stdClass();
+ 	$node->title 						= $nombres." ".$apellidos;
+ 	$node->field_nombres["und"]["0"]["value"] 				= $nombres;
+ 	$node->field_apellidos["und"]["0"]["value"] 				= $apellidos;
+ 	$node->field_genero["und"]["0"]["value"] 				= $genero;
+ 	$node->field_fecha_de_nacimiento["und"]["0"]["value"] 	= $date;
+ 	$node->field_ciudad["und"]["0"]["value"] 				= $ciudad;
+ 	$node->field_direccion["und"]["0"]["value"] 				= $direccion;
+  	$node->type = "persona";
+  	node_object_prepare($node); // Sets some defaults. Invokes hook_prepare() and hook_node_prepare().
+  	$node->language = LANGUAGE_NONE; // Or e.g. 'en' if locale is enabled
+  	$node->uid = 1; 
+  	$node->status = 1; //(1 or 0): published or not
+  	$node->promote = 0; //(1 or 0): promoted to front page
+  	$node->comment = 1; // 0 = comments disabled, 1 = read only, 2 = read/write
+
+
+  	$node = node_submit($node); // Prepare node for saving
+  	node_save($node);
+
+	drupal_set_message(t('Se han guardado correctamente los datos'));
+}
+
+function all_registros(){
+	
+
+	if(isset($_POST["filtro"])){
+		echo "entro";
+
+		$node_type = "persona"; // can find this on the node type's "edit" screen in the Drupal admin section.
+		$filtro_fecha 	= ""; 
+		$filtro_genero 	= ""; 
+		$filtro_nombres = ""; 
+		if ($_POST["f_inicial"] !="" && $_POST["f_inicial"] !="") {
+			$filtro_fecha = "and created BETWEEN ".$_POST['f_inicial']." AND ".$_POST['f_final']." ";
+		}
+		if ($_POST["genero"] != "") {
+			$filtro_genero = "and field_genero_value = ".$_POST['genero']." ";
+		}
+		if ($_POST["nombres_apellidos"] != "") {
+			$filtro_nombres = "AND field_nombres_value LIKE '%".$_POST['nombres_apellidos']."%' OR field_apellidos_value LIKE '%".$_POST['nombres_apellidos']."%' ";
+		}
+		$result = db_query("SELECT node.nid as id, gen.field_genero_value as genero, nom.field_nombres_value as nombre , nac.field_fecha_de_nacimiento_value as nacimiento , ape.field_apellidos_value as apellido , cid.field_ciudad_value as ciudad , dir.field_direccion_value as direccion  FROM node 
+				LEFT JOIN field_data_field_genero gen ON gen.entity_id = node.nid
+				LEFT JOIN field_data_field_nombres nom ON nom.entity_id = node.nid
+				LEFT JOIN field_data_field_fecha_de_nacimiento nac ON nac.entity_id = node.nid
+				LEFT JOIN field_data_field_apellidos ape ON ape.entity_id = node.nid
+				LEFT JOIN field_data_field_ciudad cid ON cid.entity_id = node.nid
+				LEFT JOIN field_data_field_direccion dir ON dir.entity_id = node.nid
+				WHERE type = '$node_type'  $filtro_fecha  $filtro_genero $filtro_nombres  ");
+
+		    // etc...
+		 foreach ($result as $record) {
+		 	# code...
+		    // echo "<pre>";
+		    // print_r($record);
+		    // echo "</pre>";
+		 }
+		
+		// echo "<pre>";
+		//     print_r($result);
+		//     echo "</pre>";
+
+		 // $result = db_select('node', 'n')
+		 //    ->fields('n')
+		 //    ->condition('type', "persona")
+		 //    ->condition('status', 0,'>')
+		 //    ->condition('created', array($_POST["f_inicial"], $_POST["f_final"]), 'BETWEEN')
+		 //    ->fieldCondition('field_nombres', '%' . db_like($_POST["nombres_apellidos"]) . '%', 'LIKE')
+		 //    ->fieldCondition('field_apellidos', '%' . db_like($_POST["nombres_apellidos"]) . '%', 'LIKE')
+		 //    ->fieldCondition('field_genero', $_POST["genero"],'=')
+		 //    ->execute()
+		 //    ->fetchAssoc();
+
+
+		    exit();
+
+	} else{
+		$nodes = node_load_multiple(array(), array('type' => $type)); 
+	}
+	$tr = "";
+	foreach ($nodes as $key => $node) {
+		$node = node_load($node->nid);
+		// echo "<pre>";
+		// print_r($node);
+		// echo "</pre>";
+		$nombres 	= $node->field_nombres["und"]["0"]["value"];
+	 	$apellidos 	= $node->field_apellidos["und"]["0"]["value"];
+	 	$genero 	= $node->field_genero["und"]["0"]["value"];
+	 	$genero 	= ($genero == 1) ? "Mujer" : "Hombre" ;
+	 	$date 		= $node->field_fecha_de_nacimiento["und"]["0"]["value"];
+	 	$ciudad 	= $node->field_ciudad["und"]["0"]["value"];
+	 	$direccion 	= $node->field_direccion["und"]["0"]["value"];
+	 	$edit_link 	= "<a href='node/$node->nid/edit?destination=admin/content' target='_blank'>Editar</a>";
+	 	$erase_link 	= "<a href='node/$node->nid/edit?destination=admin/content' target='_blank'>Borrar</a>";
+	 	$tr .= "
+	 		<tr>
+				<td>$node->nid</td>
+				<td>$nombres</td>
+				<td>$apellidos</td>
+				<td>$genero</td>
+				<td>$date</td>
+				<td>$ciudad</td>
+				<td>$direccion</td>
+				<td>$edit_link</td>
+				<td>$erase_link</td>
+			</tr>
+	 	";
+	}
+	$cabeceras="
+				<td>Id</td>
+				<td>nombres</td>
+				<td>apellidos</td>
+				<td>genero</td>
+				<td>Nacimiento</td>
+				<td>ciudad</td>
+				<td>direccion</td>
+				<td>editar</td>
+				<td>borrar</td>
+	";
+	$form_filtros ='
+			<form action="" method="POST">
+				<p>Fecha Inicial - final</p>
+				<input type="text" name="f_inicial" value="" placeholder="Fecha inicial dia/mes/año">
+				<input type="text" name="f_final" value="" placeholder="Fecha final dia/mes/año">
+				<p>Sexo:</p>
+				<select name="genero" id="">
+					<option value="">Cualquiera</option>
+					<option value="1">Mujer</option>
+					<option value="2">Hombre</option>
+				</select>
+				<p>Nombres y apellidos:</p>
+				<input type="text" name="nombres_apellidos">
+				<input type="submit" value="filtrar" name="filtro">
+			</form>
+	';
+	$content = $form_filtros.' 
+		<table>
+				<tr>
+					'.$cabeceras.'
+				</tr>
+				'.$tr.'
+		</table>';
+	return $content;
+}
+
+
+?>

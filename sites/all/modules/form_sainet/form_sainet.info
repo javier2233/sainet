@@ -1,0 +1,7 @@
+name = form sainet
+description = Form Sainet Testing
+core = 7.x
+package = Forms
+
+stylesheets[all][] = css/sainet_mod.css
+scripts[] = js/sainet.js

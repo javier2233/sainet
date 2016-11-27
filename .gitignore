@@ -6,4 +6,4 @@ sites/*/files
 sites/*/private
 
 includes/
-modules/
+/modules/
