@@ -16,26 +16,26 @@ function form_sainet_permission() {
 function form_sainet_menu() {
   $items = array();
 
-  $items['registro/form-sainet'] = array( //this creates a URL that will call this form at "examples/form-example"
-    'title' => 'Form Sainet', //page title
+  $items['registro/form-sainet'] = array( 
+    'title' => 'Form Sainet', 
     'description' => 'Form Testing',
-    'page callback' => 'drupal_get_form', //this is the function that will be called when the page is accessed.  for a form, use drupal_get_form
-    'page arguments' => array('form_sainet_form'), //put the name of the form here
+    'page callback' => 'drupal_get_form', 
+    'page arguments' => array('form_sainet_form'), 
     'access callback' => TRUE
   );
 
 
 
-  $items['create_xls'] = array( //this creates a URL that will call this form at "examples/form-example"
-    'title' => 'Xls Sainet', //page title
+  $items['create_xls'] = array( 
+    'title' => 'Xls Sainet', 
     'description' => 'Xls',
     'page callback' => 'create_xls_f',
     'access arguments' => array('administer your module'),
     'type' => MENU_NORMAL_ITEM,
   );
 
-  $items['registros'] = array( //this creates a URL that will call this form at "examples/form-example"
-    'title' => 'Registros Sainet', //page title
+  $items['registros'] = array( 
+    'title' => 'Registros Sainet', 
     'description' => 'Form Testing',
     'page callback' => 'all_registros',
     'access arguments' => array('administer your module'),
@@ -140,12 +140,10 @@ function form_sainet_form($form, &$form_state) {
   return $form;
 }
 
+
+/* implements hook form submit*/
 function form_sainet_form_submit($form, &$form_state) {
 	
-	// echo "<pre>";
-	// print_r($node);
-	// echo "</pre>";
-	// exit("aca");
 	$nombres 	= $form_state["values"]["nombres"];
 	$apellidos 	= $form_state["values"]["apellidos"];
 	$genero 	= $form_state["values"]["genero"];
@@ -164,12 +162,12 @@ function form_sainet_form_submit($form, &$form_state) {
  	$node->field_ciudad["und"]["0"]["value"] 				= $ciudad;
  	$node->field_direccion["und"]["0"]["value"] 				= $direccion;
   	$node->type = "persona";
-  	node_object_prepare($node); // Sets some defaults. Invokes hook_prepare() and hook_node_prepare().
-  	$node->language = LANGUAGE_NONE; // Or e.g. 'en' if locale is enabled
+  	node_object_prepare($node); 
+  	$node->language = LANGUAGE_NONE; 
   	$node->uid = 1; 
-  	$node->status = 1; //(1 or 0): published or not
-  	$node->promote = 0; //(1 or 0): promoted to front page
-  	$node->comment = 1; // 0 = comments disabled, 1 = read only, 2 = read/write
+  	$node->status = 1; 
+  	$node->promote = 0; 
+  	$node->comment = 1; 
 
 
   	$node = node_submit($node); // Prepare node for saving
@@ -178,6 +176,7 @@ function form_sainet_form_submit($form, &$form_state) {
 	drupal_set_message(t('Se han guardado correctamente los datos'));
 }
 
+/* fuction get all or filter register*/
 function all_registros(){
 	
 	if(isset($_POST["filtro"])){
@@ -323,7 +322,7 @@ function all_registros(){
 	}
 }
 
-
+/* create dinamic table for data*/
 function create_html($nid,$nombres,$apellidos,$genero,$date,$ciudad,$direccion,$edit_link,$erase_link ){
 	$tr = "";
 	$tr .= "
@@ -345,7 +344,7 @@ function create_html($nid,$nombres,$apellidos,$genero,$date,$ciudad,$direccion,$
 	return $tr;
 }
 
-
+/* create xls file */
 function create_xls_f(){
 
 
