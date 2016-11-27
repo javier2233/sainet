@@ -26,6 +26,14 @@ function form_sainet_menu() {
 
 
 
+  $items['create_xls'] = array( //this creates a URL that will call this form at "examples/form-example"
+    'title' => 'Xls Sainet', //page title
+    'description' => 'Xls',
+    'page callback' => 'create_xls_f',
+    'access arguments' => array('administer your module'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
   $items['registros'] = array( //this creates a URL that will call this form at "examples/form-example"
     'title' => 'Registros Sainet', //page title
     'description' => 'Form Testing',
@@ -172,9 +180,8 @@ function form_sainet_form_submit($form, &$form_state) {
 
 function all_registros(){
 	
-
 	if(isset($_POST["filtro"])){
-		echo "entro";
+		
 
 		$node_type = "persona"; // can find this on the node type's "edit" screen in the Drupal admin section.
 		$filtro_fecha 	= ""; 
@@ -198,53 +205,130 @@ function all_registros(){
 				LEFT JOIN field_data_field_direccion dir ON dir.entity_id = node.nid
 				WHERE type = '$node_type'  $filtro_fecha  $filtro_genero $filtro_nombres  ");
 
-		    // etc...
+		 $content_tr ="";
 		 foreach ($result as $record) {
 		 	# code...
 		    // echo "<pre>";
 		    // print_r($record);
 		    // echo "</pre>";
+		    $nid 		= $record->id;	
+		    $nombres 	= $record->nombre;
+		 	$apellidos 	= $record->apellido;
+		 	$genero 	= $record->genero;
+		 	$genero 	= ($genero == 1) ? "Mujer" : "Hombre" ;
+		 	$date 		= $record->nacimiento;
+		 	$ciudad 	= $record->ciudad;
+		 	$direccion 	= $record->direccion;
+		 	$edit_link 	= "<a href='node/$record->id/edit?destination=admin/content' target='_blank'>Editar</a>";
+	 		$erase_link 	= "<a href='node/$record->id/edit?destination=admin/content' target='_blank'>Borrar</a>";
+
+	 		$content_tr .= create_html($nid,$nombres,$apellidos,$genero,$date,$ciudad,$direccion,$edit_link,$erase_link);
 		 }
 		
-		// echo "<pre>";
-		//     print_r($result);
-		//     echo "</pre>";
-
-		 // $result = db_select('node', 'n')
-		 //    ->fields('n')
-		 //    ->condition('type', "persona")
-		 //    ->condition('status', 0,'>')
-		 //    ->condition('created', array($_POST["f_inicial"], $_POST["f_final"]), 'BETWEEN')
-		 //    ->fieldCondition('field_nombres', '%' . db_like($_POST["nombres_apellidos"]) . '%', 'LIKE')
-		 //    ->fieldCondition('field_apellidos', '%' . db_like($_POST["nombres_apellidos"]) . '%', 'LIKE')
-		 //    ->fieldCondition('field_genero', $_POST["genero"],'=')
-		 //    ->execute()
-		 //    ->fetchAssoc();
-
-
-		    exit();
+		$cabeceras="
+				<td>Id</td>
+				<td>nombres</td>
+				<td>apellidos</td>
+				<td>genero</td>
+				<td>Nacimiento</td>
+				<td>ciudad</td>
+				<td>direccion</td>
+				<td>editar</td>
+				<td>borrar</td>
+		";
+		$form_filtros ='
+				<form action="" method="POST" id="form_filtro">
+					<p>Fecha Inicial - final</p>
+					<input type="text" name="f_inicial" value="" placeholder="Fecha inicial dia/mes/año">
+					<input type="text" name="f_final" value="" placeholder="Fecha final dia/mes/año">
+					<p>Sexo:</p>
+					<select name="genero" id="">
+						<option value="">Cualquiera</option>
+						<option value="1">Mujer</option>
+						<option value="2">Hombre</option>
+					</select>
+					<p>Nombres y apellidos:</p>
+					<input type="text" name="nombres_apellidos">
+					<input type="submit" value="filtrar" name="filtro">
+					<input type="submit" value="exportar" name="exportar" id="exportar">
+				</form>
+		';
+		$content = $form_filtros.' 
+			<table>
+					<tr>
+						'.$cabeceras.'
+					</tr>
+					'.$content_tr.'
+			</table>';
+		return $content;
 
 	} else{
+		$type = "persona";
 		$nodes = node_load_multiple(array(), array('type' => $type)); 
+
+		$content_tr ="";
+		foreach ($nodes as $key => $node) {
+			$node = node_load($node->nid);
+			// echo "<pre>";
+			// print_r($node);
+			// echo "</pre>";
+			$nombres 	= $node->field_nombres["und"]["0"]["value"];
+		 	$apellidos 	= $node->field_apellidos["und"]["0"]["value"];
+		 	$genero 	= $node->field_genero["und"]["0"]["value"];
+		 	$genero 	= ($genero == 1) ? "Mujer" : "Hombre" ;
+		 	$date 		= $node->field_fecha_de_nacimiento["und"]["0"]["value"];
+		 	$ciudad 	= $node->field_ciudad["und"]["0"]["value"];
+		 	$direccion 	= $node->field_direccion["und"]["0"]["value"];
+		 	$edit_link 	= "<a href='node/$node->nid/edit?destination=admin/content' target='_blank'>Editar</a>";
+		 	$erase_link 	= "<a href='node/$node->nid/edit?destination=admin/content' target='_blank'>Borrar</a>";
+		
+		$content_tr .= create_html($node->nid,$nombres,$apellidos,$genero,$date,$ciudad,$direccion,$edit_link,$erase_link);
+		}
+		$cabeceras="
+					<td>Id</td>
+					<td>nombres</td>
+					<td>apellidos</td>
+					<td>genero</td>
+					<td>Nacimiento</td>
+					<td>ciudad</td>
+					<td>direccion</td>
+					<td>editar</td>
+					<td>borrar</td>
+		";
+		$form_filtros ='
+				<form action="" method="POST" id="form_filtro">
+					<p>Fecha Inicial - final</p>
+					<input type="text" name="f_inicial" value="" placeholder="Fecha inicial dia/mes/año">
+					<input type="text" name="f_final" value="" placeholder="Fecha final dia/mes/año">
+					<p>Sexo:</p>
+					<select name="genero" id="">
+						<option value="">Cualquiera</option>
+						<option value="1">Mujer</option>
+						<option value="2">Hombre</option>
+					</select>
+					<p>Nombres y apellidos:</p>
+					<input type="text" name="nombres_apellidos">
+					<input type="submit" value="filtrar" name="filtro">
+					<input type="submit" value="exportar" name="exportar" id="exportar">
+				</form>
+		';
+		$content = $form_filtros.' 
+			<table>
+					<tr>
+						'.$cabeceras.'
+					</tr>
+					'.$content_tr.'
+			</table>';
+		return $content;
 	}
+}
+
+
+function create_html($nid,$nombres,$apellidos,$genero,$date,$ciudad,$direccion,$edit_link,$erase_link ){
 	$tr = "";
-	foreach ($nodes as $key => $node) {
-		$node = node_load($node->nid);
-		// echo "<pre>";
-		// print_r($node);
-		// echo "</pre>";
-		$nombres 	= $node->field_nombres["und"]["0"]["value"];
-	 	$apellidos 	= $node->field_apellidos["und"]["0"]["value"];
-	 	$genero 	= $node->field_genero["und"]["0"]["value"];
-	 	$genero 	= ($genero == 1) ? "Mujer" : "Hombre" ;
-	 	$date 		= $node->field_fecha_de_nacimiento["und"]["0"]["value"];
-	 	$ciudad 	= $node->field_ciudad["und"]["0"]["value"];
-	 	$direccion 	= $node->field_direccion["und"]["0"]["value"];
-	 	$edit_link 	= "<a href='node/$node->nid/edit?destination=admin/content' target='_blank'>Editar</a>";
-	 	$erase_link 	= "<a href='node/$node->nid/edit?destination=admin/content' target='_blank'>Borrar</a>";
-	 	$tr .= "
+	$tr .= "
 	 		<tr>
-				<td>$node->nid</td>
+				<td>$nid</td>
 				<td>$nombres</td>
 				<td>$apellidos</td>
 				<td>$genero</td>
@@ -255,43 +339,171 @@ function all_registros(){
 				<td>$erase_link</td>
 			</tr>
 	 	";
-	}
-	$cabeceras="
-				<td>Id</td>
-				<td>nombres</td>
-				<td>apellidos</td>
-				<td>genero</td>
-				<td>Nacimiento</td>
-				<td>ciudad</td>
-				<td>direccion</td>
-				<td>editar</td>
-				<td>borrar</td>
-	";
-	$form_filtros ='
-			<form action="" method="POST">
-				<p>Fecha Inicial - final</p>
-				<input type="text" name="f_inicial" value="" placeholder="Fecha inicial dia/mes/año">
-				<input type="text" name="f_final" value="" placeholder="Fecha final dia/mes/año">
-				<p>Sexo:</p>
-				<select name="genero" id="">
-					<option value="">Cualquiera</option>
-					<option value="1">Mujer</option>
-					<option value="2">Hombre</option>
-				</select>
-				<p>Nombres y apellidos:</p>
-				<input type="text" name="nombres_apellidos">
-				<input type="submit" value="filtrar" name="filtro">
-			</form>
-	';
-	$content = $form_filtros.' 
-		<table>
-				<tr>
-					'.$cabeceras.'
-				</tr>
-				'.$tr.'
-		</table>';
-	return $content;
+	
+	
+
+	return $tr;
 }
 
+
+function create_xls_f(){
+
+
+	/** Include PHPExcel */
+	require_once 'PHPExcel/Classes/PHPExcel.php';
+
+
+	// Create new PHPExcel object
+	$objPHPExcel = new PHPExcel();
+
+	// Set document properties
+	$objPHPExcel->getProperties()->setCreator("Javier Canon")
+								 ->setLastModifiedBy("Javier Canon")
+								 ->setTitle("Office 2007 XLSX  Document")
+								 ->setSubject("Office 2007 XLSX  Document")
+								 ->setDescription("Registros")
+								 ->setKeywords("office 2007 openxml php")
+								 ->setCategory("registros");
+
+	if(isset($_POST["exportar"])){
+		
+
+		$node_type = "persona"; // can find this on the node type's "edit" screen in the Drupal admin section.
+		$filtro_fecha 	= ""; 
+		$filtro_genero 	= ""; 
+		$filtro_nombres = ""; 
+		if ($_POST["f_inicial"] !="" && $_POST["f_inicial"] !="") {
+			$filtro_fecha = "and created BETWEEN ".$_POST['f_inicial']." AND ".$_POST['f_final']." ";
+		}
+		if ($_POST["genero"] != "") {
+			$filtro_genero = "and field_genero_value = ".$_POST['genero']." ";
+		}
+		if ($_POST["nombres_apellidos"] != "") {
+			$filtro_nombres = "AND field_nombres_value LIKE '%".$_POST['nombres_apellidos']."%' OR field_apellidos_value LIKE '%".$_POST['nombres_apellidos']."%' ";
+		}
+		$result = db_query("SELECT node.nid as id, gen.field_genero_value as genero, nom.field_nombres_value as nombre , nac.field_fecha_de_nacimiento_value as nacimiento , ape.field_apellidos_value as apellido , cid.field_ciudad_value as ciudad , dir.field_direccion_value as direccion  FROM node 
+				LEFT JOIN field_data_field_genero gen ON gen.entity_id = node.nid
+				LEFT JOIN field_data_field_nombres nom ON nom.entity_id = node.nid
+				LEFT JOIN field_data_field_fecha_de_nacimiento nac ON nac.entity_id = node.nid
+				LEFT JOIN field_data_field_apellidos ape ON ape.entity_id = node.nid
+				LEFT JOIN field_data_field_ciudad cid ON cid.entity_id = node.nid
+				LEFT JOIN field_data_field_direccion dir ON dir.entity_id = node.nid
+				WHERE type = '$node_type'  $filtro_fecha  $filtro_genero $filtro_nombres  ");
+
+		 $pointer = 1;
+		 foreach ($result as $record) {
+		 	# code...
+		    // echo "<pre>";
+		    // print_r($record);
+		    // echo "</pre>";
+		    $nid 		= $record->id;	
+		    $nombres 	= $record->nombre;
+		 	$apellidos 	= $record->apellido;
+		 	$genero 	= $record->genero;
+		 	$genero 	= ($genero == 1) ? "Mujer" : "Hombre" ;
+		 	$date 		= $record->nacimiento;
+		 	$ciudad 	= $record->ciudad;
+		 	$direccion 	= $record->direccion;
+
+	 		$pointer++;
+		 	$objPHPExcel->setActiveSheetIndex(0)
+		            ->setCellValue('A'.$pointer, $nid)
+		            ->setCellValue('B'.$pointer, $nombres)
+		            ->setCellValue('C'.$pointer, $apellidos)
+		            ->setCellValue('D'.$pointer, $genero)
+		            ->setCellValue('E'.$pointer, $date)
+		            ->setCellValue('F'.$pointer, $ciudad)
+		            ->setCellValue('G'.$pointer, $direccion);
+		 }
+		
+		
+
+	} else{
+		$type = "persona";
+		$nodes = node_load_multiple(array(), array('type' => $type)); 
+
+		$content_tr ="";
+		$pointer = 1;
+		foreach ($nodes as $key => $node) {
+			$node = node_load($node->nid);
+			// echo "<pre>";
+			// print_r($node);
+			// echo "</pre>";
+			$nombres 	= $node->field_nombres["und"]["0"]["value"];
+		 	$apellidos 	= $node->field_apellidos["und"]["0"]["value"];
+		 	$genero 	= $node->field_genero["und"]["0"]["value"];
+		 	$genero 	= ($genero == 1) ? "Mujer" : "Hombre" ;
+		 	$date 		= $node->field_fecha_de_nacimiento["und"]["0"]["value"];
+		 	$ciudad 	= $node->field_ciudad["und"]["0"]["value"];
+		 	$direccion 	= $node->field_direccion["und"]["0"]["value"];
+			
+			$pointer++;
+		 	$objPHPExcel->setActiveSheetIndex(0)
+		            ->setCellValue('A'.$pointer, $node->nid)
+		            ->setCellValue('B'.$pointer, $nombres)
+		            ->setCellValue('C'.$pointer, $apellidos)
+		            ->setCellValue('D'.$pointer, $genero)
+		            ->setCellValue('E'.$pointer, $date)
+		            ->setCellValue('F'.$pointer, $ciudad)
+		            ->setCellValue('G'.$pointer, $direccion);
+		            
+			
+		
+		}
+	}
+
+	// Add some data
+	$objPHPExcel->setActiveSheetIndex(0)
+	            ->setCellValue('A1', 'id')
+	            ->setCellValue('B1', 'Nombres')
+	            ->setCellValue('C1', 'Apellidos')
+	            ->setCellValue('D1', 'Genero')
+	            ->setCellValue('E1', 'Nacimiento')
+	            ->setCellValue('F1', 'Ciudad')
+	            ->setCellValue('G1', 'Direccion');
+	
+
+	$objPHPExcel->getActiveSheet()
+			    ->getColumnDimension('A')
+			    ->setAutoSize(true);
+	$objPHPExcel->getActiveSheet()
+			    ->getColumnDimension('B')
+			    ->setAutoSize(true);
+	$objPHPExcel->getActiveSheet()
+			    ->getColumnDimension('C')
+			    ->setAutoSize(true);
+	$objPHPExcel->getActiveSheet()
+			    ->getColumnDimension('D')
+			    ->setAutoSize(true);
+
+	
+	// Rename worksheet
+	$objPHPExcel->getActiveSheet()->setTitle('Lista_registros');
+
+
+	// Set active sheet index to the first sheet, so Excel opens this as the first sheet
+	$objPHPExcel->setActiveSheetIndex(0);
+	$date_now = date("Y-m-d");
+
+
+	// Redirect output to a client’s web browser (Excel5)
+	header('Content-Type: application/vnd.ms-excel');
+	header('Content-Disposition: attachment;filename="lista_registros_'.$date_now.'.xls"');
+	header('Cache-Control: max-age=0');
+	// If you're serving to IE 9, then the following may be needed
+	header('Cache-Control: max-age=1');
+
+	// If you're serving to IE over SSL, then the following may be needed
+	header ('Expires: Mon, 26 Jul 1997 05:00:00 GMT'); // Date in the past
+	header ('Last-Modified: '.gmdate('D, d M Y H:i:s').' GMT'); // always modified
+	header ('Cache-Control: cache, must-revalidate'); // HTTP/1.1
+	header ('Pragma: public'); // HTTP/1.0
+
+	$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
+	$objWriter->save('php://output');
+
+
+
+}
 
 ?>

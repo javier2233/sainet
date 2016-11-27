@@ -13,5 +13,11 @@ jQuery(document).ready(function(){
 			jQuery("#edit-group1").fadeIn();
 		});
 	});
+
+	jQuery("#exportar").click(function(e){
+		jQuery("#form_filtro").attr("action","create_xls");
+		return true;
+		
+	})
 });
 
